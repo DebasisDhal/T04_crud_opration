@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, flash, render_template, request, jsonify, url_for, redirect
 from models import db, StudentModel
 from datetime import datetime
 
@@ -14,50 +14,44 @@ with app.app_context():
     db.create_all()
 
 
-@app.route('/', methods = ['GET', 'POSt'])
-def create():
-     if request.method == 'GET':
-          return render_template('create.html')
+@app.route('/')
+def index():
+   return render_template('index.html')
 
-# Add student    
-@app.route('/students', methods=['POST'])
+
+@app.route('/add_student', methods=['POST'])
 def add_student():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({"error": "Invalid input"}), 400
+        # Extracting form data from the request
+        name = request.form['name']
+        email = request.form['email']
+        age = request.form['age']
 
-        name = data.get('name')
-        email = data.get('email')
-        age = data.get('age')
-        date_of_birth_str = data.get('date_of_birth')
+        # Convert the date string from the form to a Python date object
+        date_of_birth_str = request.form['date_of_birth']
+        date_of_birth = datetime.strptime(date_of_birth_str, '%Y-%m-%d').date()
 
-        if not all([name, email, age, date_of_birth_str]):
-            return jsonify({"error": "All fields are required"}), 400
-
-        try:
-            date_of_birth = datetime.strptime(date_of_birth_str, "%Y-%m-%d").date()
-        except ValueError:
-            return jsonify({"error": "Invalid date format, use YYYY-MM-DD"}), 400
-
+        # Creating a new student object and adding it to the database
         new_student = StudentModel(name=name, email=email, age=age, date_of_birth=date_of_birth)
         db.session.add(new_student)
         db.session.commit()
 
-        return jsonify({"message": "Student added successfully", "id": new_student.id}), 201
+        flash('Student added successfully!', 'success')
+        return redirect(url_for('list_students'))
 
     except Exception as e:
-        app.logger.error(f"Error occurred while adding student: {str(e)}")
-        return jsonify({"error": "Internal server error"}), 500
+        # In case of an error, flash an error message and redirect to the form
+        flash(f'Error occurred while adding student: {e}', 'error')
+        return redirect(url_for('index'))
 
 # Get all students
 @app.route('/students', methods=['GET'])
-def get_students():
+def list_students():
     students = StudentModel.query.all()
-    return jsonify([{"id": student.id, "name": student.name, "email": student.email, "age": student.age, "date_of_birth": student.date_of_birth.strftime('%Y-%m-%d')} for student in students]), 200
+    return render_template('student_list.html', students=students)
 
 # Update
-@app.route('/students/<int:student_id>', methods=['PUT'])
+@app.route('/edit_student/<int:student_id>', methods=['GET', 'POST'])
 def update_student(student_id):
     student = StudentModel.query.get(student_id)
     if student is None:
@@ -70,18 +64,18 @@ def update_student(student_id):
     student.date_of_birth = data.get('date_of_birth', student.date_of_birth)
 
     db.session.commit()
-    return jsonify({"message": "Student updated successfully"}), 200
+    return redirect(url_for('list_students'))
 
 # Delete
 @app.route('/students/<int:student_id>', methods=['DELETE'])
 def delete_student(student_id):
     student = StudentModel.query.get(student_id)
-    if student is None:
-        return jsonify({"error": "Student not found"}), 404
+    # if student is None:
+    #     return jsonify({"error": "Student not found"}), 404
 
     db.session.delete(student)
     db.session.commit()
-    return jsonify({"message": "Student deleted successfully"}), 200
+    return redirect(url_for('list_students'))
 
 
 
