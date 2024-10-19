@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Student List</title>
+</head>
+<body>
+    <header>
+        <h1>Student Registration System</h1>
+        <nav>
+            <ul >
+                <li ><a style="color: black;" href="{{ url_for('index') }}">Home</a></li>
+                <li><a style="color: black;" href="{{ url_for('list_students') }}">View Students</a></li>
+            </ul>
+    </header>
+
+    <h2>Students List</h2>
+    <a href="{{ url_for('index') }}">Add New Student</a>
+
+    <!-- Student List Table -->
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Age</th>
+                <th>Date of Birth</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student.name }}</td>
+                <td>{{ student.email }}</td>
+                <td>{{ student.age }}</td>
+                <td>{{ student.date_of_birth }}</td>
+                <td>
+                    <a href=""
+                  
+                    class="btn btn-warning">Edit</a>
+                    <form 
+                   
+                    method="POST" style="display:inline;">
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+</html>
